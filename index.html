@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anime Watchlist Client</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen font-sans">
+
+    <nav class="bg-gray-800 border-b border-gray-700 px-6 py-4 flex justify-between items-center shadow-md">
+        <h1 class="text-2xl font-bold text-indigo-400 tracking-wide">🎬 AnimeWatch</h1>
+        <div id="nav-user-info" class="hidden flex items-center gap-4">
+            <span id="user-display" class="text-sm font-medium text-gray-300"></span>
+            <button onclick="logout()" class="bg-red-600 hover:bg-red-500 text-white text-sm px-4 py-2 rounded-lg font-semibold transition shadow">Logout</button>
+        </div>
+    </nav>
+
+    <div class="max-w-6xl mx-auto p-6">
+        
+        <div id="auth-section" class="max-w-md mx-auto bg-gray-800 p-8 rounded-xl border border-gray-700 shadow-xl mt-12">
+            <h2 class="text-xl font-bold text-center mb-6 text-indigo-300">Sign In via API Gateway</h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-400 uppercase mb-2">Email Address</label>
+                    <input type="email" id="email" value="admin@example.com" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-400 uppercase mb-2">Password</label>
+                    <input type="password" id="password" value="password" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-indigo-500">
+                </div>
+                <button onclick="login()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-lg transition shadow-md mt-2">Sign In</button>
+            </div>
+        </div>
+
+        <div id="main-dashboard" class="hidden space-y-8 mt-6">
+            
+            <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-lg">
+                <h2 class="text-lg font-bold text-indigo-300 mb-4 flex items-center gap-2">🔍 Cari Anime (via AniDB Service)</h2>
+                <div class="flex gap-3">
+                    <input type="text" id="search-query" placeholder="Ketik judul anime, misal: Naruto, One Piece..." class="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-indigo-500">
+                    <button onclick="searchAnime()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-6 py-2 rounded-lg transition shadow">Cari</button>
+                </div>
+
+                <div id="search-results" class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6"></div>
+            </div>
+
+            <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-lg">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-bold text-indigo-300 flex items-center gap-2">📌 My Watchlist Data</h2>
+                    <button onclick="loadWatchlist()" class="text-xs bg-gray-700 hover:bg-gray-600 text-gray-200 px-3 py-1.5 rounded transition">🔄 Refresh List</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-gray-700 text-gray-400 text-xs uppercase tracking-wider">
+                                <th class="py-3 px-4">Judul Anime</th>
+                                <th class="py-3 px-4">Rating</th>
+                                <th class="py-3 px-4">Status Tonton</th>
+                                <th class="py-3 px-4 text-right">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="watchlist-table-body" class="divide-y divide-gray-700/50 text-sm">
+                            <tr>
+                                <td colspan="4" class="py-4 text-center text-gray-500">Belum ada data watchlist. Silakan cari anime di atas dan tambahkan.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const GATEWAY_URL = 'http://127.0.0.1:8000/api';
+        let jwtToken = localStorage.getItem('token') || '';
+
+        // Otomatis restore login session jika token tersimpan di browser
+        if (jwtToken) {
+            showDashboard();
+        }
+
+        async function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const response = await fetch(`${GATEWAY_URL}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                const resData = await response.json();
+
+                if (resData.success) {
+                    jwtToken = resData.data.token;
+                    localStorage.setItem('token', jwtToken);
+                    alert('Login Sukses via API Gateway!');
+                    showDashboard();
+                } else {
+                    alert('Gagal: ' + resData.message);
+                }
+            } catch (err) {
+                alert('Koneksi Gateway Gagal! Pastikan Port 8000 aktif.');
+            }
+        }
+
+        async function showDashboard() {
+            document.getElementById('auth-section').classList.add('hidden');
+            document.getElementById('main-dashboard').classList.remove('hidden');
+            document.getElementById('nav-user-info').classList.remove('hidden');
+            
+            // Get user profile info
+            try {
+                const response = await fetch(`${GATEWAY_URL}/profile`, {
+                    headers: { 'Authorization': `Bearer ${jwtToken}` }
+                });
+                const resData = await response.json();
+                if(resData.success) {
+                    document.getElementById('user-display').innerText = `Halo, ${resData.data.name} (${resData.data.role})`;
+                }
+            } catch (e) {}
+
+            loadWatchlist();
+        }
+
+        async function logout() {
+            try {
+                await fetch(`${GATEWAY_URL}/logout`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${jwtToken}` }
+                });
+            } catch(e) {}
+            
+            jwtToken = '';
+            localStorage.removeItem('token');
+            document.getElementById('auth-section').classList.remove('hidden');
+            document.getElementById('main-dashboard').classList.add('hidden');
+            document.getElementById('nav-user-info').classList.add('hidden');
+            alert('Berhasil Logout!');
+        }
+
+        async function searchAnime() {
+            const query = document.getElementById('search-query').value;
+            const container = document.getElementById('search-results');
+            container.innerHTML = '<p class="text-gray-400 text-sm">Sedang mencari data ke AniDB API...</p>';
+
+            try {
+                const response = await fetch(`${GATEWAY_URL}/anime/search?q=${encodeURIComponent(query)}`, {
+                    headers: { 'Authorization': `Bearer ${jwtToken}` }
+                });
+                const resData = await response.json();
+
+                container.innerHTML = '';
+                if (resData.success && resData.data.length > 0) {
+                    resData.data.forEach(anime => {
+                        const card = document.createElement('div');
+                        card.className = "flex bg-gray-900 border border-gray-700 p-4 rounded-lg items-center justify-between shadow";
+                        card.innerHTML = `
+                            <div class="flex items-center gap-4">
+                                <img src="${anime.image || 'https://via.placeholder.com/50x75'}" class="w-12 h-16 object-cover rounded bg-gray-800">
+                                <div>
+                                    <h4 class="font-bold text-indigo-200 text-sm">${anime.title}</h4>
+                                    <p class="text-xs text-gray-400">Rating: ${anime.rating || 'N/A'}</p>
+                                </div>
+                            </div>
+                            <button onclick="addToWatchlist('${anime.id}', '${anime.title.replace(/'/g, "\\'")}', '${anime.rating}', '${anime.image}')" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs px-3 py-2 rounded font-semibold transition">+ Watchlist</button>
+                        `;
+                        container.appendChild(card);
+                    });
+                } else {
+                    container.innerHTML = '<p class="text-red-400 text-sm">Anime tidak ditemukan atau Service eksternal limit.</p>';
+                }
+            } catch (err) {
+                container.innerHTML = '<p class="text-red-400 text-sm">Gagal memanggil data anime via gateway.</p>';
+            }
+        }
+
+        async function loadWatchlist() {
+            const tbody = document.getElementById('watchlist-table-body');
+            try {
+                const response = await fetch(`${GATEWAY_URL}/watchlists`, {
+                    headers: { 'Authorization': `Bearer ${jwtToken}` }
+                });
+                const resData = await response.json();
+
+                tbody.innerHTML = '';
+                if (resData.success && resData.data.length > 0) {
+                    resData.data.forEach(item => {
+                        const tr = document.createElement('tr');
+                        tr.className = "border-b border-gray-800 hover:bg-gray-700/20 transition";
+                        tr.innerHTML = `
+                            <td class="py-3 px-4 font-medium text-gray-200">${item.anime_title}</td>
+                            <td class="py-3 px-4 text-gray-400">${item.anime_rating || '-'}</td>
+                            <td class="py-3 px-4">
+                                <span class="px-2 py-1 rounded text-xs font-semibold bg-indigo-900/50 text-indigo-300 border border-indigo-700/50">${item.status_watching}</span>
+                            </td>
+                            <td class="py-3 px-4 text-right space-x-2">
+                                <button onclick="updateStatus(${item.id}, '${item.status_watching}')" class="text-xs bg-yellow-600/20 text-yellow-400 hover:bg-yellow-600/40 px-2.5 py-1 rounded border border-yellow-500/30 transition">Ubah Status</button>
+                                <button onclick="deleteWatchlist(${item.id})" class="text-xs bg-red-600/20 text-red-400 hover:bg-red-600/40 px-2.5 py-1 rounded border border-red-500/30 transition">Hapus</button>
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="4" class="py-4 text-center text-gray-500">Belum ada data di watchlist Anda.</td></tr>';
+                }
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="4" class="py-4 text-center text-red-400">Gagal memuat data watchlist.</td></tr>';
+            }
+        }
+
+        async function addToWatchlist(id, title, rating, image) {
+            try {
+                const response = await fetch(`${GATEWAY_URL}/watchlists`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${jwtToken}`
+                    },
+                    body: JSON.stringify({
+                        anime_id: id,
+                        anime_title: title,
+                        anime_rating: rating,
+                        anime_image: image,
+                        status_watching: 'Plan to Watch'
+                    })
+                });
+                const resData = await response.json();
+                if(resData.success) {
+                    alert('Sukses menambahkan ke watchlist database!');
+                    loadWatchlist();
+                }
+            } catch (e) { alert('Gagal menambah watchlist'); }
+        }
+
+        async function updateStatus(id, currentStatus) {
+            const nextStatus = currentStatus === 'Plan to Watch' ? 'Watching' : 'Completed';
+            try {
+                const response = await fetch(`${GATEWAY_URL}/watchlists/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${jwtToken}`
+                    },
+                    body: JSON.stringify({ status_watching: nextStatus })
+                });
+                const resData = await response.json();
+                if(resData.success) {
+                    loadWatchlist();
+                }
+            } catch (e) {}
+        }
+
+        async function deleteWatchlist(id) {
+            if(!confirm('Yakin ingin menghapus item ini dari database?')) return;
+            try {
+                const response = await fetch(`${GATEWAY_URL}/watchlists/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${jwtToken}` }
+                });
+                const resData = await response.json();
+                if(resData.success) {
+                    loadWatchlist();
+                }
+            } catch (e) {}
+        }
+    </script>
+</body>
+</html>
