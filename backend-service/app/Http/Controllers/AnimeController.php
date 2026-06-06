@@ -14,6 +14,16 @@ class AnimeController extends Controller
         $this->aniDbService = $aniDbService;
     }
 
+    /**
+     * @OA\Get(
+     *     path="/anime/search",
+     *     summary="Search Anime on AniDB",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="q", in="query", required=true, @OA\Schema(type="string")),
+     *     @OA\Response(response=200, description="Data anime berhasil diambil"),
+     *     @OA\Response(response=422, description="Query kosong")
+     * )
+     */
     public function search(Request $request)
     {
         $query = $request->query('q', '');

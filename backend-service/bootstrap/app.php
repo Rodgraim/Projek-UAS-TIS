@@ -29,6 +29,14 @@ return Application::configure(basePath: dirname(__DIR__))
             ], 404);
         });
 
+        $exceptions->render(function (\Illuminate\Validation\ValidationException $e, $request) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal.',
+                'errors' => $e->errors()
+            ], 422);
+        });
+
         $exceptions->render(function (AuthenticationException $e, $request) {
             return response()->json([
                 'success' => false,

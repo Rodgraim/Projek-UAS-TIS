@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Anime Watchlist Client</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen font-sans">
 
@@ -69,15 +70,38 @@
                 </div>
             </div>
 
+            <div id="admin-dashboard" class="hidden bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-lg">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-bold text-rose-400 flex items-center gap-2">👑 Admin: Daftar User</h2>
+                    <button onclick="loadUsers()" class="text-xs bg-gray-700 hover:bg-gray-600 text-gray-200 px-3 py-1.5 rounded transition">🔄 Refresh Users</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-gray-700 text-gray-400 text-xs uppercase tracking-wider">
+                                <th class="py-3 px-4">Nama</th>
+                                <th class="py-3 px-4">Email</th>
+                                <th class="py-3 px-4">Role</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-table-body" class="divide-y divide-gray-700/50 text-sm">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
         </div>
     </div>
 
     <script>
         const GATEWAY_URL = 'http://127.0.0.1:8000/api';
         let jwtToken = localStorage.getItem('token') || '';
+        let currentUserRole = '';
 
-        // Otomatis restore login session jika token tersimpan di browser
+        // Configure Axios defaults
+        axios.defaults.baseURL = GATEWAY_URL;
         if (jwtToken) {
+            axios.defaults.headers.common['Authorization'] = `Bearer ${jwtToken}`;
             showDashboard();
         }
 
@@ -86,23 +110,20 @@
             const password = document.getElementById('password').value;
 
             try {
-                const response = await fetch(`${GATEWAY_URL}/login`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password })
-                });
-                const resData = await response.json();
+                const response = await axios.post('/login', { email, password });
+                const resData = response.data;
 
                 if (resData.success) {
                     jwtToken = resData.data.token;
                     localStorage.setItem('token', jwtToken);
+                    axios.defaults.headers.common['Authorization'] = `Bearer ${jwtToken}`;
                     alert('Login Sukses via API Gateway!');
                     showDashboard();
                 } else {
                     alert('Gagal: ' + resData.message);
                 }
             } catch (err) {
-                alert('Koneksi Gateway Gagal! Pastikan Port 8000 aktif.');
+                alert('Gagal: ' + (err.response?.data?.message || 'Koneksi Gateway Gagal!'));
             }
         }
 
@@ -111,33 +132,38 @@
             document.getElementById('main-dashboard').classList.remove('hidden');
             document.getElementById('nav-user-info').classList.remove('hidden');
             
-            // Get user profile info
             try {
-                const response = await fetch(`${GATEWAY_URL}/profile`, {
-                    headers: { 'Authorization': `Bearer ${jwtToken}` }
-                });
-                const resData = await response.json();
+                const response = await axios.get('/profile');
+                const resData = response.data;
                 if(resData.success) {
-                    document.getElementById('user-display').innerText = `Halo, ${resData.data.name} (${resData.data.role})`;
+                    currentUserRole = resData.data.role;
+                    document.getElementById('user-display').innerText = `Halo, ${resData.data.name} (${currentUserRole})`;
+                    
+                    if (currentUserRole === 'admin') {
+                        document.getElementById('admin-dashboard').classList.remove('hidden');
+                        loadUsers();
+                    }
                 }
-            } catch (e) {}
+            } catch (e) {
+                if(e.response?.status === 401) logout();
+            }
 
             loadWatchlist();
         }
 
         async function logout() {
             try {
-                await fetch(`${GATEWAY_URL}/logout`, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${jwtToken}` }
-                });
+                await axios.post('/logout');
             } catch(e) {}
             
             jwtToken = '';
+            currentUserRole = '';
             localStorage.removeItem('token');
+            delete axios.defaults.headers.common['Authorization'];
             document.getElementById('auth-section').classList.remove('hidden');
             document.getElementById('main-dashboard').classList.add('hidden');
             document.getElementById('nav-user-info').classList.add('hidden');
+            document.getElementById('admin-dashboard').classList.add('hidden');
             alert('Berhasil Logout!');
         }
 
@@ -147,10 +173,8 @@
             container.innerHTML = '<p class="text-gray-400 text-sm">Sedang mencari data ke AniDB API...</p>';
 
             try {
-                const response = await fetch(`${GATEWAY_URL}/anime/search?q=${encodeURIComponent(query)}`, {
-                    headers: { 'Authorization': `Bearer ${jwtToken}` }
-                });
-                const resData = await response.json();
+                const response = await axios.get(`/anime/search?q=${encodeURIComponent(query)}`);
+                const resData = response.data;
 
                 container.innerHTML = '';
                 if (resData.success && resData.data.length > 0) {
@@ -173,17 +197,15 @@
                     container.innerHTML = '<p class="text-red-400 text-sm">Anime tidak ditemukan atau Service eksternal limit.</p>';
                 }
             } catch (err) {
-                container.innerHTML = '<p class="text-red-400 text-sm">Gagal memanggil data anime via gateway.</p>';
+                container.innerHTML = `<p class="text-red-400 text-sm">Gagal memanggil data: ${err.response?.data?.message || err.message}</p>`;
             }
         }
 
         async function loadWatchlist() {
             const tbody = document.getElementById('watchlist-table-body');
             try {
-                const response = await fetch(`${GATEWAY_URL}/watchlists`, {
-                    headers: { 'Authorization': `Bearer ${jwtToken}` }
-                });
-                const resData = await response.json();
+                const response = await axios.get('/watchlists');
+                const resData = response.data;
 
                 tbody.innerHTML = '';
                 if (resData.success && resData.data.length > 0) {
@@ -211,43 +233,54 @@
             }
         }
 
+        async function loadUsers() {
+            const tbody = document.getElementById('users-table-body');
+            try {
+                const response = await axios.get('/users');
+                const resData = response.data;
+
+                tbody.innerHTML = '';
+                if (resData.success && resData.data.length > 0) {
+                    resData.data.forEach(user => {
+                        const tr = document.createElement('tr');
+                        tr.className = "border-b border-gray-800 hover:bg-gray-700/20 transition";
+                        const roleColor = user.role === 'admin' ? 'text-rose-400' : 'text-indigo-300';
+                        tr.innerHTML = `
+                            <td class="py-3 px-4 font-medium text-gray-200">${user.name}</td>
+                            <td class="py-3 px-4 text-gray-400">${user.email}</td>
+                            <td class="py-3 px-4 font-semibold ${roleColor}">${user.role.toUpperCase()}</td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                }
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="3" class="py-4 text-center text-red-400">Gagal memuat data users. Pastikan Anda admin.</td></tr>';
+            }
+        }
+
         async function addToWatchlist(id, title, rating, image) {
             try {
-                const response = await fetch(`${GATEWAY_URL}/watchlists`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${jwtToken}`
-                    },
-                    body: JSON.stringify({
-                        anime_id: id,
-                        anime_title: title,
-                        anime_rating: rating,
-                        anime_image: image,
-                        status_watching: 'Plan to Watch'
-                    })
+                const response = await axios.post('/watchlists', {
+                    anime_id: id,
+                    anime_title: title,
+                    anime_rating: rating,
+                    anime_image: image,
+                    status_watching: 'Plan to Watch'
                 });
-                const resData = await response.json();
-                if(resData.success) {
+                if(response.data.success) {
                     alert('Sukses menambahkan ke watchlist database!');
                     loadWatchlist();
                 }
-            } catch (e) { alert('Gagal menambah watchlist'); }
+            } catch (e) { 
+                alert('Gagal menambah watchlist: ' + (e.response?.data?.message || e.message)); 
+            }
         }
 
         async function updateStatus(id, currentStatus) {
             const nextStatus = currentStatus === 'Plan to Watch' ? 'Watching' : 'Completed';
             try {
-                const response = await fetch(`${GATEWAY_URL}/watchlists/${id}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${jwtToken}`
-                    },
-                    body: JSON.stringify({ status_watching: nextStatus })
-                });
-                const resData = await response.json();
-                if(resData.success) {
+                const response = await axios.put(`/watchlists/${id}`, { status_watching: nextStatus });
+                if(response.data.success) {
                     loadWatchlist();
                 }
             } catch (e) {}
@@ -256,12 +289,8 @@
         async function deleteWatchlist(id) {
             if(!confirm('Yakin ingin menghapus item ini dari database?')) return;
             try {
-                const response = await fetch(`${GATEWAY_URL}/watchlists/${id}`, {
-                    method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${jwtToken}` }
-                });
-                const resData = await response.json();
-                if(resData.success) {
+                const response = await axios.delete(`/watchlists/${id}`);
+                if(response.data.success) {
                     loadWatchlist();
                 }
             } catch (e) {}

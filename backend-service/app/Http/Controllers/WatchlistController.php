@@ -7,6 +7,14 @@ use App\Models\Watchlist;
 
 class WatchlistController extends Controller
 {
+    /**
+     * @OA\Get(
+     *     path="/watchlists",
+     *     summary="Get All Watchlists",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(response=200, description="Daftar watchlist diambil")
+     * )
+     */
     public function index()
     {
         $user = auth()->user();
@@ -23,6 +31,25 @@ class WatchlistController extends Controller
         ]);
     }
 
+    /**
+     * @OA\Post(
+     *     path="/watchlists",
+     *     summary="Add to Watchlist",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="anime_id", type="string"),
+     *             @OA\Property(property="anime_title", type="string"),
+     *             @OA\Property(property="anime_rating", type="string"),
+     *             @OA\Property(property="anime_image", type="string"),
+     *             @OA\Property(property="status_watching", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=201, description="Anime ditambahkan ke watchlist"),
+     *     @OA\Response(response=422, description="Validasi Gagal")
+     * )
+     */
     public function store(Request $request)
     {
         $request->validate([
@@ -46,6 +73,16 @@ class WatchlistController extends Controller
         ], 201);
     }
 
+    /**
+     * @OA\Get(
+     *     path="/watchlists/{id}",
+     *     summary="Get Watchlist Detail",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Detail watchlist ditemukan"),
+     *     @OA\Response(response=403, description="Akses dilarang")
+     * )
+     */
     public function show($id)
     {
         $watchlist = Watchlist::findOrFail($id);
@@ -60,6 +97,22 @@ class WatchlistController extends Controller
         ]);
     }
 
+    /**
+     * @OA\Put(
+     *     path="/watchlists/{id}",
+     *     summary="Update Watchlist Status",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status_watching", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Status watchlist diperbarui"),
+     *     @OA\Response(response=403, description="Akses dilarang")
+     * )
+     */
     public function update(Request $request, $id)
     {
         $watchlist = Watchlist::findOrFail($id);
@@ -76,6 +129,16 @@ class WatchlistController extends Controller
         ]);
     }
 
+    /**
+     * @OA\Delete(
+     *     path="/watchlists/{id}",
+     *     summary="Delete Watchlist",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Watchlist dihapus"),
+     *     @OA\Response(response=403, description="Akses dilarang")
+     * )
+     */
     public function destroy($id)
     {
         $watchlist = Watchlist::findOrFail($id);
