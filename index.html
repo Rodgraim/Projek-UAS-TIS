@@ -1,46 +1,57 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Anime Watchlist Client</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
+
 <body class="bg-gray-900 text-gray-100 min-h-screen font-sans">
 
     <nav class="bg-gray-800 border-b border-gray-700 px-6 py-4 flex justify-between items-center shadow-md">
-        <h1 class="text-2xl font-bold text-indigo-400 tracking-wide">🎬 AnimeWatch</h1>
+        <h1 class="text-2xl font-bold text-indigo-400 tracking-wide">AnimeWatch</h1>
         <div id="nav-user-info" class="hidden flex items-center gap-4">
             <span id="user-display" class="text-sm font-medium text-gray-300"></span>
-            <button onclick="logout()" class="bg-red-600 hover:bg-red-500 text-white text-sm px-4 py-2 rounded-lg font-semibold transition shadow">Logout</button>
+            <button onclick="logout()"
+                class="bg-red-600 hover:bg-red-500 text-white text-sm px-4 py-2 rounded-lg font-semibold transition shadow">Logout</button>
         </div>
     </nav>
 
     <div class="max-w-6xl mx-auto p-6">
-        
-        <div id="auth-section" class="max-w-md mx-auto bg-gray-800 p-8 rounded-xl border border-gray-700 shadow-xl mt-12">
-            <h2 class="text-xl font-bold text-center mb-6 text-indigo-300">Sign In via API Gateway</h2>
+
+        <div id="auth-section"
+            class="max-w-md mx-auto bg-gray-800 p-8 rounded-xl border border-gray-700 shadow-xl mt-12">
+            <h2 class="text-xl font-bold text-center mb-6 text-indigo-300">Sign In</h2>
             <div class="space-y-4">
                 <div>
                     <label class="block text-xs font-semibold text-gray-400 uppercase mb-2">Email Address</label>
-                    <input type="email" id="email" value="admin@example.com" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-indigo-500">
+                    <input type="email" id="email" value="admin@example.com"
+                        class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-indigo-500">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-gray-400 uppercase mb-2">Password</label>
-                    <input type="password" id="password" value="password" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-indigo-500">
+                    <input type="password" id="password" value="password"
+                        class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-indigo-500">
                 </div>
-                <button onclick="login()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-lg transition shadow-md mt-2">Sign In</button>
+                <button onclick="login()"
+                    class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-lg transition shadow-md mt-2">Sign
+                    In</button>
             </div>
         </div>
 
         <div id="main-dashboard" class="hidden space-y-8 mt-6">
-            
+
             <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-lg">
-                <h2 class="text-lg font-bold text-indigo-300 mb-4 flex items-center gap-2">🔍 Cari Anime (via AniDB Service)</h2>
+                <h2 class="text-lg font-bold text-indigo-300 mb-4 flex items-center gap-2">Cari Anime</h2>
                 <div class="flex gap-3">
-                    <input type="text" id="search-query" placeholder="Ketik judul anime, misal: Naruto, One Piece..." class="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-indigo-500">
-                    <button onclick="searchAnime()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-6 py-2 rounded-lg transition shadow">Cari</button>
+                    <input type="text" id="search-query" placeholder="Ketik judul anime, misal: Naruto, One Piece..."
+                        class="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-indigo-500">
+                    <button onclick="searchAnime()"
+                        class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-6 py-2 rounded-lg transition shadow">Cari</button>
                 </div>
 
                 <div id="search-results" class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6"></div>
@@ -48,8 +59,10 @@
 
             <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-lg">
                 <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-lg font-bold text-indigo-300 flex items-center gap-2">📌 My Watchlist Data</h2>
-                    <button onclick="loadWatchlist()" class="text-xs bg-gray-700 hover:bg-gray-600 text-gray-200 px-3 py-1.5 rounded transition">🔄 Refresh List</button>
+                    <h2 class="text-lg font-bold text-indigo-300 flex items-center gap-2">My Watchlist Data</h2>
+                    <button onclick="loadWatchlist()"
+                        class="text-xs bg-gray-700 hover:bg-gray-600 text-gray-200 px-3 py-1.5 rounded transition">Refresh
+                        List</button>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
@@ -63,7 +76,8 @@
                         </thead>
                         <tbody id="watchlist-table-body" class="divide-y divide-gray-700/50 text-sm">
                             <tr>
-                                <td colspan="4" class="py-4 text-center text-gray-500">Belum ada data watchlist. Silakan cari anime di atas dan tambahkan.</td>
+                                <td colspan="4" class="py-4 text-center text-gray-500">Belum ada data watchlist. Silakan
+                                    cari anime di atas dan tambahkan.</td>
                             </tr>
                         </tbody>
                     </table>
@@ -72,8 +86,10 @@
 
             <div id="admin-dashboard" class="hidden bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-lg">
                 <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-lg font-bold text-rose-400 flex items-center gap-2">👑 Admin: Daftar User</h2>
-                    <button onclick="loadUsers()" class="text-xs bg-gray-700 hover:bg-gray-600 text-gray-200 px-3 py-1.5 rounded transition">🔄 Refresh Users</button>
+                    <h2 class="text-lg font-bold text-rose-400 flex items-center gap-2">Admin: Daftar User</h2>
+                    <button onclick="loadUsers()"
+                        class="text-xs bg-gray-700 hover:bg-gray-600 text-gray-200 px-3 py-1.5 rounded transition">Refresh
+                        Users</button>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
@@ -117,13 +133,13 @@
                     jwtToken = resData.data.token;
                     localStorage.setItem('token', jwtToken);
                     axios.defaults.headers.common['Authorization'] = `Bearer ${jwtToken}`;
-                    alert('Login Sukses via API Gateway!');
+                    Swal.fire({ icon: 'success', title: 'Login Sukses!', text: 'Berhasil masuk via API Gateway', timer: 1500, showConfirmButton: false, background: '#1f2937', color: '#f3f4f6' });
                     showDashboard();
                 } else {
-                    alert('Gagal: ' + resData.message);
+                    Swal.fire({ icon: 'error', title: 'Login Gagal', text: resData.message, timer: 2000, showConfirmButton: false, background: '#1f2937', color: '#f3f4f6' });
                 }
             } catch (err) {
-                alert('Gagal: ' + (err.response?.data?.message || 'Koneksi Gateway Gagal!'));
+                Swal.fire({ icon: 'error', title: 'Gagal', text: err.response?.data?.message || 'Koneksi Gateway Gagal!', timer: 2000, showConfirmButton: false, background: '#1f2937', color: '#f3f4f6' });
             }
         }
 
@@ -131,21 +147,21 @@
             document.getElementById('auth-section').classList.add('hidden');
             document.getElementById('main-dashboard').classList.remove('hidden');
             document.getElementById('nav-user-info').classList.remove('hidden');
-            
+
             try {
                 const response = await axios.get('/profile');
                 const resData = response.data;
-                if(resData.success) {
+                if (resData.success) {
                     currentUserRole = resData.data.role;
                     document.getElementById('user-display').innerText = `Halo, ${resData.data.name} (${currentUserRole})`;
-                    
+
                     if (currentUserRole === 'admin') {
                         document.getElementById('admin-dashboard').classList.remove('hidden');
                         loadUsers();
                     }
                 }
             } catch (e) {
-                if(e.response?.status === 401) logout();
+                if (e.response?.status === 401) logout();
             }
 
             loadWatchlist();
@@ -154,8 +170,8 @@
         async function logout() {
             try {
                 await axios.post('/logout');
-            } catch(e) {}
-            
+            } catch (e) { }
+
             jwtToken = '';
             currentUserRole = '';
             localStorage.removeItem('token');
@@ -164,7 +180,7 @@
             document.getElementById('main-dashboard').classList.add('hidden');
             document.getElementById('nav-user-info').classList.add('hidden');
             document.getElementById('admin-dashboard').classList.add('hidden');
-            alert('Berhasil Logout!');
+            Swal.fire({ icon: 'success', title: 'Logout Berhasil!', timer: 1500, showConfirmButton: false, background: '#1f2937', color: '#f3f4f6' });
         }
 
         async function searchAnime() {
@@ -267,12 +283,12 @@
                     anime_image: image,
                     status_watching: 'Plan to Watch'
                 });
-                if(response.data.success) {
-                    alert('Sukses menambahkan ke watchlist database!');
+                if (response.data.success) {
+                    Swal.fire({ icon: 'success', title: 'Ditambahkan!', text: 'Anime berhasil masuk watchlist', timer: 1500, showConfirmButton: false, background: '#1f2937', color: '#f3f4f6' });
                     loadWatchlist();
                 }
-            } catch (e) { 
-                alert('Gagal menambah watchlist: ' + (e.response?.data?.message || e.message)); 
+            } catch (e) {
+                Swal.fire({ icon: 'error', title: 'Gagal', text: e.response?.data?.message || e.message, timer: 2000, showConfirmButton: false, background: '#1f2937', color: '#f3f4f6' });
             }
         }
 
@@ -280,21 +296,35 @@
             const nextStatus = currentStatus === 'Plan to Watch' ? 'Watching' : 'Completed';
             try {
                 const response = await axios.put(`/watchlists/${id}`, { status_watching: nextStatus });
-                if(response.data.success) {
+                if (response.data.success) {
                     loadWatchlist();
                 }
-            } catch (e) {}
+            } catch (e) { }
         }
 
         async function deleteWatchlist(id) {
-            if(!confirm('Yakin ingin menghapus item ini dari database?')) return;
+            const result = await Swal.fire({
+                title: 'Hapus dari Watchlist?',
+                text: 'Item ini akan dihapus dari database',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#4b5563',
+                confirmButtonText: 'Ya, Hapus!',
+                cancelButtonText: 'Batal',
+                background: '#1f2937',
+                color: '#f3f4f6'
+            });
+            if (!result.isConfirmed) return;
             try {
                 const response = await axios.delete(`/watchlists/${id}`);
-                if(response.data.success) {
+                if (response.data.success) {
+                    Swal.fire({ icon: 'success', title: 'Terhapus!', timer: 1500, showConfirmButton: false, background: '#1f2937', color: '#f3f4f6' });
                     loadWatchlist();
                 }
-            } catch (e) {}
+            } catch (e) { }
         }
     </script>
 </body>
+
 </html>

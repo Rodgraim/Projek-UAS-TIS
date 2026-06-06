@@ -2,26 +2,1240 @@
     "openapi": "3.0.0",
     "info": {
         "title": "Sistem Manajemen Anime Watchlist API",
-        "description": "Dokumentasi REST API Proyek Akhir Web Service - Backend Service",
+        "description": "Dokumentasi lengkap REST API untuk Proyek Akhir Teknologi Integrasi Sistem. API ini menyediakan fitur autentikasi JWT, manajemen watchlist anime, pencarian anime via AniDB, dan manajemen user oleh admin.",
+        "contact": {
+            "name": "Raka Paksi",
+            "email": "rakapaksi@example.com"
+        },
         "version": "1.0.0"
     },
     "servers": [
         {
             "url": "http://127.0.0.1:8001/api",
-            "description": "Main Backend Server"
+            "description": "Backend Service Server"
         }
     ],
     "paths": {
-        "/ping": {
+        "/anime/search": {
             "get": {
-                "summary": "Cek status server",
-                "description": "Anotasi Pancingan agar Swagger tidak error (Required @OA\\PathItem() not found)",
-                "operationId": "bc4845c974cc10f791f2d1e87d8be900",
+                "tags": [
+                    "Anime Search"
+                ],
+                "summary": "Search Anime",
+                "description": "Mencari data anime dari external AniDB API berdasarkan keyword judul. Membutuhkan autentikasi JWT.",
+                "operationId": "searchAnime",
+                "parameters": [
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "description": "Keyword pencarian judul anime",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "Naruto"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "Server berjalan normal"
+                        "description": "Data anime berhasil diambil dari AniDB",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Data anime dari AniDB berhasil diambil"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "string",
+                                                        "example": "20"
+                                                    },
+                                                    "title": {
+                                                        "type": "string",
+                                                        "example": "Naruto"
+                                                    },
+                                                    "rating": {
+                                                        "type": "string",
+                                                        "example": "8.25"
+                                                    },
+                                                    "image": {
+                                                        "type": "string",
+                                                        "example": "https://cdn.myanimelist.net/images/anime/13/17405.jpg"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Query pencarian kosong",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Query pencarian tidak boleh kosong"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Token tidak valid atau expired"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/login": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Login User",
+                "description": "Autentikasi user dengan email dan password, mengembalikan token JWT untuk akses API.",
+                "operationId": "loginUser",
+                "requestBody": {
+                    "description": "Kredensial login",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "admin@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "password"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Login berhasil",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Login berhasil"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "token": {
+                                                    "type": "string",
+                                                    "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+                                                },
+                                                "user": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "Admin"
+                                                        },
+                                                        "email": {
+                                                            "type": "string",
+                                                            "example": "admin@example.com"
+                                                        },
+                                                        "role": {
+                                                            "type": "string",
+                                                            "example": "admin"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Email atau password salah",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Email atau password salah"
+                                        },
+                                        "errors": {
+                                            "type": "string",
+                                            "example": null,
+                                            "nullable": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 }
+            }
+        },
+        "/profile": {
+            "get": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Get User Profile",
+                "description": "Mengambil data profil user yang sedang login berdasarkan token JWT.",
+                "operationId": "getUserProfile",
+                "responses": {
+                    "200": {
+                        "description": "Profile berhasil diambil",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Profile berhasil diambil"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Admin"
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "example": "admin@example.com"
+                                                },
+                                                "role": {
+                                                    "type": "string",
+                                                    "example": "admin"
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Token tidak valid atau expired"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/logout": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Logout User",
+                "description": "Menginvalidasi token JWT user yang sedang login.",
+                "operationId": "logoutUser",
+                "responses": {
+                    "200": {
+                        "description": "Logout berhasil",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Logout berhasil"
+                                        },
+                                        "data": {
+                                            "type": "string",
+                                            "example": null,
+                                            "nullable": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Token tidak valid atau expired"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/users": {
+            "get": {
+                "tags": [
+                    "User Management"
+                ],
+                "summary": "Get All Users",
+                "description": "Mengambil daftar seluruh user yang terdaftar. Endpoint ini hanya bisa diakses oleh admin.",
+                "operationId": "getAllUsers",
+                "responses": {
+                    "200": {
+                        "description": "Daftar user berhasil diambil",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Daftar user berhasil diambil"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Admin"
+                                                    },
+                                                    "email": {
+                                                        "type": "string",
+                                                        "example": "admin@example.com"
+                                                    },
+                                                    "role": {
+                                                        "type": "string",
+                                                        "example": "admin"
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    },
+                                                    "updated_at": {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Token tidak valid atau expired"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "User Management"
+                ],
+                "summary": "Create User",
+                "description": "Membuat user baru. Endpoint ini hanya bisa diakses oleh admin.",
+                "operationId": "createUser",
+                "requestBody": {
+                    "description": "Data user baru",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "email",
+                                    "password",
+                                    "role"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "John Doe"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "john@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "password123"
+                                    },
+                                    "role": {
+                                        "description": "Role: admin, manager, atau user",
+                                        "type": "string",
+                                        "example": "user"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "User berhasil dibuat",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "User berhasil dibuat"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 4
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "John Doe"
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "example": "john@example.com"
+                                                },
+                                                "role": {
+                                                    "type": "string",
+                                                    "example": "user"
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validasi gagal"
+                    },
+                    "401": {
+                        "description": "Token tidak valid atau expired"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/users/{id}": {
+            "get": {
+                "tags": [
+                    "User Management"
+                ],
+                "summary": "Get User Detail",
+                "description": "Mengambil detail satu user berdasarkan ID. Hanya admin.",
+                "operationId": "getUserDetail",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID user",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Detail user ditemukan",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Detail user ditemukan"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Admin"
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "example": "admin@example.com"
+                                                },
+                                                "role": {
+                                                    "type": "string",
+                                                    "example": "admin"
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User tidak ditemukan"
+                    },
+                    "401": {
+                        "description": "Token tidak valid atau expired"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "User Management"
+                ],
+                "summary": "Update User",
+                "description": "Memperbarui data user berdasarkan ID. Hanya admin. Password bersifat opsional.",
+                "operationId": "updateUser",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID user",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "description": "Data user yang akan diperbarui",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Admin Updated"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "admin@example.com"
+                                    },
+                                    "password": {
+                                        "description": "Opsional",
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "newpassword123"
+                                    },
+                                    "role": {
+                                        "type": "string",
+                                        "example": "admin"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "User berhasil diubah",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "User berhasil diubah"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Admin Updated"
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "example": "admin@example.com"
+                                                },
+                                                "role": {
+                                                    "type": "string",
+                                                    "example": "admin"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validasi gagal"
+                    },
+                    "404": {
+                        "description": "User tidak ditemukan"
+                    },
+                    "401": {
+                        "description": "Token tidak valid atau expired"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "User Management"
+                ],
+                "summary": "Delete User",
+                "description": "Menghapus user berdasarkan ID. Hanya admin.",
+                "operationId": "deleteUser",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID user",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User berhasil dihapus",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "User berhasil dihapus"
+                                        },
+                                        "data": {
+                                            "type": "string",
+                                            "example": null,
+                                            "nullable": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User tidak ditemukan"
+                    },
+                    "401": {
+                        "description": "Token tidak valid atau expired"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/watchlists": {
+            "get": {
+                "tags": [
+                    "Watchlist"
+                ],
+                "summary": "Get All Watchlists",
+                "description": "Mengambil semua data watchlist milik user yang login. Admin dapat melihat seluruh watchlist dari semua user.",
+                "operationId": "getWatchlists",
+                "responses": {
+                    "200": {
+                        "description": "Daftar watchlist berhasil diambil",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Daftar watchlist berhasil diambil"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "user_id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "anime_id": {
+                                                        "type": "string",
+                                                        "example": "20"
+                                                    },
+                                                    "anime_title": {
+                                                        "type": "string",
+                                                        "example": "Naruto"
+                                                    },
+                                                    "anime_rating": {
+                                                        "type": "string",
+                                                        "example": "8.25"
+                                                    },
+                                                    "anime_image": {
+                                                        "type": "string",
+                                                        "example": "https://cdn.myanimelist.net/images/anime/13/17405.jpg"
+                                                    },
+                                                    "status_watching": {
+                                                        "type": "string",
+                                                        "example": "Watching"
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    },
+                                                    "updated_at": {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Token tidak valid atau expired"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Watchlist"
+                ],
+                "summary": "Add to Watchlist",
+                "description": "Menambahkan anime ke watchlist user yang sedang login.",
+                "operationId": "addToWatchlist",
+                "requestBody": {
+                    "description": "Data anime yang akan ditambahkan ke watchlist",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "anime_id",
+                                    "anime_title"
+                                ],
+                                "properties": {
+                                    "anime_id": {
+                                        "description": "ID anime dari AniDB",
+                                        "type": "string",
+                                        "example": "20"
+                                    },
+                                    "anime_title": {
+                                        "description": "Judul anime",
+                                        "type": "string",
+                                        "example": "Naruto"
+                                    },
+                                    "anime_rating": {
+                                        "description": "Rating anime",
+                                        "type": "string",
+                                        "example": "8.25"
+                                    },
+                                    "anime_image": {
+                                        "description": "URL gambar anime",
+                                        "type": "string",
+                                        "example": "https://cdn.myanimelist.net/images/anime/13/17405.jpg"
+                                    },
+                                    "status_watching": {
+                                        "description": "Status: Plan to Watch, Watching, Completed",
+                                        "type": "string",
+                                        "example": "Plan to Watch"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Anime berhasil ditambahkan ke watchlist",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Anime berhasil ditambahkan ke watchlist"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "user_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "anime_id": {
+                                                    "type": "string",
+                                                    "example": "20"
+                                                },
+                                                "anime_title": {
+                                                    "type": "string",
+                                                    "example": "Naruto"
+                                                },
+                                                "anime_rating": {
+                                                    "type": "string",
+                                                    "example": "8.25"
+                                                },
+                                                "status_watching": {
+                                                    "type": "string",
+                                                    "example": "Plan to Watch"
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validasi gagal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The anime_id field is required."
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Token tidak valid atau expired"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/watchlists/{id}": {
+            "get": {
+                "tags": [
+                    "Watchlist"
+                ],
+                "summary": "Get Watchlist Detail",
+                "description": "Mengambil detail satu item watchlist berdasarkan ID.",
+                "operationId": "getWatchlistDetail",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID watchlist",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Detail watchlist ditemukan",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Detail watchlist ditemukan"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "user_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "anime_id": {
+                                                    "type": "string",
+                                                    "example": "20"
+                                                },
+                                                "anime_title": {
+                                                    "type": "string",
+                                                    "example": "Naruto"
+                                                },
+                                                "anime_rating": {
+                                                    "type": "string",
+                                                    "example": "8.25"
+                                                },
+                                                "status_watching": {
+                                                    "type": "string",
+                                                    "example": "Watching"
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Akses dilarang (bukan pemilik watchlist)"
+                    },
+                    "404": {
+                        "description": "Watchlist tidak ditemukan"
+                    },
+                    "401": {
+                        "description": "Token tidak valid atau expired"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Watchlist"
+                ],
+                "summary": "Update Watchlist Status",
+                "description": "Memperbarui status tontonan: Plan to Watch → Watching → Completed.",
+                "operationId": "updateWatchlistStatus",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID watchlist",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "description": "Status tontonan baru",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "status_watching"
+                                ],
+                                "properties": {
+                                    "status_watching": {
+                                        "description": "Status: Plan to Watch, Watching, atau Completed",
+                                        "type": "string",
+                                        "example": "Watching"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Status watchlist berhasil diperbarui",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Status watchlist diperbarui"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "anime_title": {
+                                                    "type": "string",
+                                                    "example": "Naruto"
+                                                },
+                                                "status_watching": {
+                                                    "type": "string",
+                                                    "example": "Watching"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Akses dilarang"
+                    },
+                    "401": {
+                        "description": "Token tidak valid atau expired"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Watchlist"
+                ],
+                "summary": "Delete Watchlist",
+                "description": "Menghapus item watchlist berdasarkan ID.",
+                "operationId": "deleteWatchlist",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID watchlist",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Watchlist berhasil dihapus",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Watchlist berhasil dihapus"
+                                        },
+                                        "data": {
+                                            "type": "string",
+                                            "example": null,
+                                            "nullable": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Akses dilarang"
+                    },
+                    "404": {
+                        "description": "Watchlist tidak ditemukan"
+                    },
+                    "401": {
+                        "description": "Token tidak valid atau expired"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         }
     },
@@ -29,9 +1243,28 @@
         "securitySchemes": {
             "bearerAuth": {
                 "type": "http",
+                "description": "Masukkan token JWT yang didapat dari endpoint /login",
                 "bearerFormat": "JWT",
                 "scheme": "bearer"
             }
         }
-    }
+    },
+    "tags": [
+        {
+            "name": "Authentication",
+            "description": "Endpoint untuk login, logout, dan profil user"
+        },
+        {
+            "name": "Anime Search",
+            "description": "Endpoint pencarian anime dari AniDB external service"
+        },
+        {
+            "name": "Watchlist",
+            "description": "Endpoint CRUD watchlist anime milik user"
+        },
+        {
+            "name": "User Management",
+            "description": "Endpoint CRUD user (khusus admin)"
+        }
+    ]
 }

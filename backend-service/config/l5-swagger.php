@@ -45,7 +45,7 @@ return [
                  * Diarahkan langsung ke AppServiceProvider agar tidak error di Laravel 12
                  */
                 'annotations' => [
-                    base_path('app/Providers/AppServiceProvider.php'),
+                    base_path('app'),
                 ],
             ],
         ],
